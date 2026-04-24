@@ -3,34 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digital Bubble Popper</title>
+    <title>Realistic Bubble Popper</title>
     <style>
         body {
             margin: 0;
             height: 100vh;
-            background: #0f172a;
+            background: radial-gradient(circle, #1e293b, #0f172a);
             overflow: hidden;
-            font-family: sans-serif;
+            touch-action: none;
         }
 
         .bubble {
             position: absolute;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.5);
-            animation: float Up 4s linear forwards;
-            cursor: pointer;
-            transition: transform 0.1s ease;
+            /* IRL Bubble Texture: Glassy with an iridescent highlight */
+            background: radial-gradient(circle at 30% 30%, 
+                rgba(255, 255, 255, 0.4) 0%, 
+                rgba(255, 255, 255, 0.1) 20%, 
+                rgba(255, 255, 255, 0) 50%);
+            box-shadow: inset -5px -5px 15px rgba(255, 255, 255, 0.2),
+                        inset 5px 5px 15px rgba(0, 0, 0, 0.1);
+            border: 0.5px solid rgba(255, 255, 255, 0.3);
+            pointer-events: auto;
+            animation: floatUp linear forwards;
         }
 
-        .bubble:hover {
-            transform: scale(1.1);
-        }
-
+        /* Floating + Slight Horizontal Sway */
         @keyframes floatUp {
-            from { transform: translateY(0); opacity: 1; }
-            to { transform: translateY(-100vh); opacity: 0; }
+            0% { transform: translateY(0) translateX(0); }
+            25% { transform: translateY(-25vh) translateX(15px); }
+            50% { transform: translateY(-50vh) translateX(-15px); }
+            75% { transform: translateY(-75vh) translateX(10px); }
+            100% { transform: translateY(-110vh) translateX(0); }
+        }
+
+        /* Pop Effect Animation */
+        .pop {
+            position: absolute;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            pointer-events: none;
+            animation: explode 0.2s ease-out forwards;
+        }
+
+        @keyframes explode {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.8); opacity: 0; }
         }
     </style>
 </head>
@@ -38,27 +56,54 @@
 
 <script>
     document.addEventListener('click', (e) => {
-        // If we click an existing bubble, pop it
-        if (e.target.classList.contains('bubble')) {
-            e.target.remove();
+        const target = e.target;
+
+        if (target.classList.contains('bubble')) {
+            popBubble(target);
             return;
         }
 
-        // Otherwise, create a new bubble at click location
-        const size = Math.random() * 60 + 20;
+        createBubble(e.clientX, e.clientY);
+    });
+
+    function createBubble(x, y) {
         const bubble = document.createElement('div');
+        const size = Math.random() * 60 + 30;
+        const duration = Math.random() * 4 + 4; // 4-8 seconds
+        
+        // Random Iridescent Hue
+        const hue = Math.floor(Math.random() * 360);
         
         bubble.className = 'bubble';
         bubble.style.width = `${size}px`;
         bubble.style.height = `${size}px`;
-        bubble.style.left = `${e.clientX - size/2}px`;
-        bubble.style.top = `${e.clientY - size/2}px`;
+        bubble.style.left = `${x - size / 2}px`;
+        bubble.style.top = `${y - size / 2}px`;
+        bubble.style.animationDuration = `${duration}s`;
+        bubble.style.filter = `hue-rotate(${hue}deg)`;
 
         document.body.appendChild(bubble);
 
-        // Auto-remove after animation finishes
-        setTimeout(() => bubble.remove(), 4000);
-    });
+        // Cleanup if not popped
+        setTimeout(() => { if(bubble.parentNode) bubble.remove(); }, duration * 1000);
+    }
+
+    function popBubble(el) {
+        // Get the CURRENT position from the computed style
+        const rect = el.getBoundingClientRect();
+        
+        const pop = document.createElement('div');
+        pop.className = 'pop';
+        pop.style.width = el.style.width;
+        pop.style.height = el.style.height;
+        pop.style.left = `${rect.left}px`;
+        pop.style.top = `${rect.top}px`;
+
+        document.body.appendChild(pop);
+        el.remove();
+
+        setTimeout(() => pop.remove(), 200);
+    }
 </script>
 </body>
 </html>
