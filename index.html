@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Abyssal Zen Popper</title>
+    <title>Abyssal Fragment Popper</title>
     <style>
         :root {
             --deep-ocean: #020617;
@@ -20,7 +20,7 @@
             touch-action: none;
             user-select: none; 
             -webkit-user-select: none;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: sans-serif;
         }
 
         @keyframes oceanFlow {
@@ -29,7 +29,6 @@
             100% { background-position: 50% 0%; }
         }
 
-        /* Glassmorphism Button */
         #zen-toggle {
             position: fixed;
             top: 20px;
@@ -42,30 +41,20 @@
             color: white;
             cursor: pointer;
             z-index: 100;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
 
-        #zen-toggle.active {
-            background: rgba(20, 184, 166, 0.4);
-            border-color: rgba(20, 184, 166, 0.6);
-            box-shadow: 0 0 20px rgba(20, 184, 166, 0.4);
-        }
-
-        .bubble {
+        .bubble, .micro-bubble {
             position: absolute;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
-            box-shadow: inset 0 10px 20px rgba(255, 255, 255, 0.3),
-                        inset 0 -10px 20px rgba(0, 0, 0, 0.2),
-                        0 5px 15px rgba(0, 0, 0, 0.3);
+            box-shadow: inset 0 5px 10px rgba(255, 255, 255, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            animation: floatUp linear forwards;
             pointer-events: auto;
         }
 
+        .bubble { animation: floatUp linear forwards; }
+        
         .bubble::after {
             content: '';
             position: absolute;
@@ -73,7 +62,6 @@
             width: 25%; height: 25%;
             background: rgba(255, 255, 255, 0.4);
             border-radius: 50%;
-            filter: blur(1px);
         }
 
         @keyframes floatUp {
@@ -81,17 +69,10 @@
             to { transform: translateY(-115vh); }
         }
 
-        .pop {
-            position: absolute;
-            border-radius: 50%;
-            border: 2px solid rgba(255, 255, 255, 0.4);
+        /* Micro-bubble specific style */
+        .micro-bubble {
             pointer-events: none;
-            animation: explode 0.2s ease-out forwards;
-        }
-
-        @keyframes explode {
-            0% { transform: scale(1); opacity: 1; }
-            100% { transform: scale(1.6); opacity: 0; }
+            transition: transform 0.6s cubic-bezier(0, .9, .5, 1), opacity 0.6s ease-out;
         }
     </style>
 </head>
@@ -103,19 +84,11 @@
     let zenMode = false;
     let zenInterval;
 
-    const btn = document.getElementById('zen-toggle');
-
-    btn.addEventListener('click', (e) => {
-        e.stopPropagation(); // Don't spawn a bubble when clicking the button
+    document.getElementById('zen-toggle').addEventListener('click', (e) => {
+        e.stopPropagation();
         zenMode = !zenMode;
-        btn.classList.toggle('active');
-        btn.innerText = `Zen Mode: ${zenMode ? 'ON' : 'OFF'}`;
-
-        if (zenMode) {
-            startZen();
-        } else {
-            clearInterval(zenInterval);
-        }
+        e.target.innerText = `Zen Mode: ${zenMode ? 'ON' : 'OFF'}`;
+        if (zenMode) startZen(); else clearInterval(zenInterval);
     });
 
     document.addEventListener('mousedown', (e) => {
@@ -129,7 +102,7 @@
 
     function createBubble(x, y, isAuto = false) {
         const bubble = document.createElement('div');
-        const size = Math.random() * 50 + 40;
+        const size = Math.random() * 40 + 30;
         const duration = Math.random() * 4 + 4;
         const hue = Math.floor(Math.random() * 360);
         
@@ -144,41 +117,62 @@
 
         document.body.appendChild(bubble);
 
-        // Zen Mode Auto-Pop Logic
         if (isAuto) {
-            // Wait until bubble is at least 25% up the screen
-            const minWait = (duration * 0.25) * 1000;
-            const randomPopTime = minWait + Math.random() * (duration * 0.5 * 1000);
-            
             setTimeout(() => {
                 if (bubble.parentNode && zenMode) popBubble(bubble);
-            }, randomPopTime);
+            }, (duration * 0.25 * 1000) + Math.random() * 3000);
         }
-
-        setTimeout(() => { if(bubble.parentNode) bubble.remove(); }, duration * 1000);
-    }
-
-    function startZen() {
-        zenInterval = setInterval(() => {
-            const randomX = Math.random() * window.innerWidth;
-            const startY = window.innerHeight + 50;
-            createBubble(randomX, startY, true);
-        }, 600); // Spawn every 600ms
+        setTimeout(() => bubble.remove(), duration * 1000);
     }
 
     function popBubble(el) {
         const rect = el.getBoundingClientRect();
-        const pop = document.createElement('div');
-        pop.className = 'pop';
-        pop.style.width = el.style.width;
-        pop.style.height = el.style.height;
-        pop.style.left = `${rect.left}px`;
-        pop.style.top = `${rect.top}px`;
-        pop.style.borderColor = el.style.borderColor;
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const color = el.style.backgroundColor;
+        const borderColor = el.style.borderColor;
 
-        document.body.appendChild(pop);
+        // Create 4-6 micro-bubbles
+        for (let i = 0; i < 5; i++) {
+            createMicroBubble(centerX, centerY, color, borderColor);
+        }
+
         el.remove();
-        setTimeout(() => pop.remove(), 200);
+    }
+
+    function createMicroBubble(x, y, color, border) {
+        const micro = document.createElement('div');
+        const size = Math.random() * 10 + 5;
+        
+        micro.className = 'micro-bubble';
+        micro.style.width = `${size}px`;
+        micro.style.height = `${size}px`;
+        micro.style.left = `${x - size / 2}px`;
+        micro.style.top = `${y - size / 2}px`;
+        micro.style.backgroundColor = color;
+        micro.style.borderColor = border;
+
+        document.body.appendChild(micro);
+
+        // Random direction for fragments
+        const angle = Math.random() * Math.PI * 2;
+        const velocity = Math.random() * 100 + 50;
+        const tx = Math.cos(angle) * velocity;
+        const ty = Math.sin(angle) * velocity;
+
+        // Animate and remove
+        requestAnimationFrame(() => {
+            micro.style.transform = `translate(${tx}px, ${ty}px) scale(0.1)`;
+            micro.style.opacity = '0';
+        });
+
+        setTimeout(() => micro.remove(), 600);
+    }
+
+    function startZen() {
+        zenInterval = setInterval(() => {
+            createBubble(Math.random() * window.innerWidth, window.innerHeight + 50, true);
+        }, 800);
     }
 </script>
 </body>
