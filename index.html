@@ -3,48 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clean Bubble Popper</title>
+    <title>Abyssal Bubble Popper</title>
     <style>
+        :root {
+            --deep-ocean: #020617;
+            --surface-ocean: #075985;
+        }
+
         body {
             margin: 0;
             height: 100vh;
-            background: #0f172a;
+            /* Background Gradient with movement */
+            background: linear-gradient(180deg, var(--surface-ocean), var(--deep-ocean));
+            background-size: 200% 200%;
+            animation: oceanFlow 12s ease-in-out infinite;
             overflow: hidden;
             touch-action: none;
-            /* FIX: Prevents text selection/blinking on rapid clicks */
             user-select: none; 
             -webkit-user-select: none;
+        }
+
+        @keyframes oceanFlow {
+            0% { background-position: 50% 0%; }
+            50% { background-position: 55% 100%; }
+            100% { background-position: 50% 0%; }
         }
 
         .bubble {
             position: absolute;
             border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, 
-                rgba(255, 255, 255, 0.4) 0%, 
-                rgba(255, 255, 255, 0) 70%);
-            box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.2);
-            border: 0.5px solid rgba(255, 255, 255, 0.3);
-            /* Linear vertical movement only - NO wobble */
+            /* Glassmorphism + 3D Effect */
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            
+            /* Inner glow and highlights for 3D depth */
+            box-shadow: 
+                inset 0 10px 20px rgba(255, 255, 255, 0.3),
+                inset 0 -10px 20px rgba(0, 0, 0, 0.2),
+                0 5px 15px rgba(0, 0, 0, 0.3);
+            
+            border: 1px solid rgba(255, 255, 255, 0.2);
             animation: floatUp linear forwards;
             pointer-events: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 3D Reflection Spot */
+        .bubble::after {
+            content: '';
+            position: absolute;
+            top: 15%;
+            left: 15%;
+            width: 25%;
+            height: 25%;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            filter: blur(1px);
         }
 
         @keyframes floatUp {
             from { transform: translateY(0); }
-            to { transform: translateY(-110vh); }
+            to { transform: translateY(-115vh); }
         }
 
         .pop {
             position: absolute;
             border-radius: 50%;
-            border: 2px solid rgba(255, 255, 255, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(0px);
             pointer-events: none;
-            animation: explode 0.15s ease-out forwards;
+            animation: explode 0.2s ease-out forwards;
         }
 
         @keyframes explode {
             0% { transform: scale(1); opacity: 1; }
-            100% { transform: scale(1.5); opacity: 0; }
+            100% { transform: scale(1.6); opacity: 0; }
         }
     </style>
 </head>
@@ -52,7 +88,6 @@
 
 <script>
     document.addEventListener('mousedown', (e) => {
-        // Use mousedown for faster response than 'click'
         if (e.target.classList.contains('bubble')) {
             popBubble(e.target);
             return;
@@ -62,8 +97,10 @@
 
     function createBubble(x, y) {
         const bubble = document.createElement('div');
-        const size = Math.random() * 50 + 30;
-        const duration = Math.random() * 3 + 3;
+        const size = Math.random() * 50 + 40;
+        const duration = Math.random() * 4 + 4;
+        
+        // Random colored glass tint
         const hue = Math.floor(Math.random() * 360);
         
         bubble.className = 'bubble';
@@ -72,7 +109,10 @@
         bubble.style.left = `${x - size / 2}px`;
         bubble.style.top = `${y - size / 2}px`;
         bubble.style.animationDuration = `${duration}s`;
-        bubble.style.filter = `hue-rotate(${hue}deg)`;
+        
+        // Apply color tint while maintaining transparency
+        bubble.style.backgroundColor = `hsla(${hue}, 70%, 70%, 0.15)`;
+        bubble.style.borderColor = `hsla(${hue}, 70%, 80%, 0.4)`;
 
         document.body.appendChild(bubble);
         setTimeout(() => { if(bubble.parentNode) bubble.remove(); }, duration * 1000);
@@ -86,10 +126,11 @@
         pop.style.height = el.style.height;
         pop.style.left = `${rect.left}px`;
         pop.style.top = `${rect.top}px`;
+        pop.style.borderColor = el.style.borderColor;
 
         document.body.appendChild(pop);
         el.remove();
-        setTimeout(() => pop.remove(), 150);
+        setTimeout(() => pop.remove(), 200);
     }
 </script>
 </body>
