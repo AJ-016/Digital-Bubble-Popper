@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Abyssal Bubble Popper</title>
+    <title>Abyssal Zen Popper</title>
     <style>
         :root {
             --deep-ocean: #020617;
@@ -13,7 +13,6 @@
         body {
             margin: 0;
             height: 100vh;
-            /* Background Gradient with movement */
             background: linear-gradient(180deg, var(--surface-ocean), var(--deep-ocean));
             background-size: 200% 200%;
             animation: oceanFlow 12s ease-in-out infinite;
@@ -21,6 +20,7 @@
             touch-action: none;
             user-select: none; 
             -webkit-user-select: none;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         @keyframes oceanFlow {
@@ -29,36 +29,48 @@
             100% { background-position: 50% 0%; }
         }
 
+        /* Glassmorphism Button */
+        #zen-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 30px;
+            color: white;
+            cursor: pointer;
+            z-index: 100;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        #zen-toggle.active {
+            background: rgba(20, 184, 166, 0.4);
+            border-color: rgba(20, 184, 166, 0.6);
+            box-shadow: 0 0 20px rgba(20, 184, 166, 0.4);
+        }
+
         .bubble {
             position: absolute;
             border-radius: 50%;
-            /* Glassmorphism + 3D Effect */
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(4px);
             -webkit-backdrop-filter: blur(4px);
-            
-            /* Inner glow and highlights for 3D depth */
-            box-shadow: 
-                inset 0 10px 20px rgba(255, 255, 255, 0.3),
-                inset 0 -10px 20px rgba(0, 0, 0, 0.2),
-                0 5px 15px rgba(0, 0, 0, 0.3);
-            
+            box-shadow: inset 0 10px 20px rgba(255, 255, 255, 0.3),
+                        inset 0 -10px 20px rgba(0, 0, 0, 0.2),
+                        0 5px 15px rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.2);
             animation: floatUp linear forwards;
             pointer-events: auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
-        /* 3D Reflection Spot */
         .bubble::after {
             content: '';
             position: absolute;
-            top: 15%;
-            left: 15%;
-            width: 25%;
-            height: 25%;
+            top: 15%; left: 15%;
+            width: 25%; height: 25%;
             background: rgba(255, 255, 255, 0.4);
             border-radius: 50%;
             filter: blur(1px);
@@ -73,7 +85,6 @@
             position: absolute;
             border-radius: 50%;
             border: 2px solid rgba(255, 255, 255, 0.4);
-            backdrop-filter: blur(0px);
             pointer-events: none;
             animation: explode 0.2s ease-out forwards;
         }
@@ -86,8 +97,29 @@
 </head>
 <body>
 
+<button id="zen-toggle">Zen Mode: OFF</button>
+
 <script>
+    let zenMode = false;
+    let zenInterval;
+
+    const btn = document.getElementById('zen-toggle');
+
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Don't spawn a bubble when clicking the button
+        zenMode = !zenMode;
+        btn.classList.toggle('active');
+        btn.innerText = `Zen Mode: ${zenMode ? 'ON' : 'OFF'}`;
+
+        if (zenMode) {
+            startZen();
+        } else {
+            clearInterval(zenInterval);
+        }
+    });
+
     document.addEventListener('mousedown', (e) => {
+        if (e.target.id === 'zen-toggle') return;
         if (e.target.classList.contains('bubble')) {
             popBubble(e.target);
             return;
@@ -95,12 +127,10 @@
         createBubble(e.clientX, e.clientY);
     });
 
-    function createBubble(x, y) {
+    function createBubble(x, y, isAuto = false) {
         const bubble = document.createElement('div');
         const size = Math.random() * 50 + 40;
         const duration = Math.random() * 4 + 4;
-        
-        // Random colored glass tint
         const hue = Math.floor(Math.random() * 360);
         
         bubble.className = 'bubble';
@@ -109,13 +139,31 @@
         bubble.style.left = `${x - size / 2}px`;
         bubble.style.top = `${y - size / 2}px`;
         bubble.style.animationDuration = `${duration}s`;
-        
-        // Apply color tint while maintaining transparency
         bubble.style.backgroundColor = `hsla(${hue}, 70%, 70%, 0.15)`;
         bubble.style.borderColor = `hsla(${hue}, 70%, 80%, 0.4)`;
 
         document.body.appendChild(bubble);
+
+        // Zen Mode Auto-Pop Logic
+        if (isAuto) {
+            // Wait until bubble is at least 25% up the screen
+            const minWait = (duration * 0.25) * 1000;
+            const randomPopTime = minWait + Math.random() * (duration * 0.5 * 1000);
+            
+            setTimeout(() => {
+                if (bubble.parentNode && zenMode) popBubble(bubble);
+            }, randomPopTime);
+        }
+
         setTimeout(() => { if(bubble.parentNode) bubble.remove(); }, duration * 1000);
+    }
+
+    function startZen() {
+        zenInterval = setInterval(() => {
+            const randomX = Math.random() * window.innerWidth;
+            const startY = window.innerHeight + 50;
+            createBubble(randomX, startY, true);
+        }, 600); // Spawn every 600ms
     }
 
     function popBubble(el) {
