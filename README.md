@@ -54,5 +54,5 @@ Distributed under the MIT License. See `LICENSE` for more information.
 ---
 
 <p align="center">
-  <i>Created with 🫧 and ☕ for Alwin.</i>
+  <i>Created with</i> 🫧 <i>and</i> ☕ <i>for Alwin.<i>
 </p>
